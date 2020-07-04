@@ -104,7 +104,7 @@ namespace Goblin.BlogCrawler.Service
 
         public Task InitCrawlerJobAsync(CancellationToken cancellationToken = default)
         {
-            var cronTime = "4 */{4} * * *"; // 4 hours / 1 time
+            var cronTime = "4 */4 * * *"; // 4 hours / 1 time
 
             if (EnvHelper.IsDevelopment())
             {

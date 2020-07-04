@@ -8,17 +8,17 @@ COPY *.sln .
 COPY Goblin.Core/Goblin.Core/*.csproj ./Goblin.Core/Goblin.Core/
 COPY Goblin.Core/Goblin.Core.Web/*.csproj ./Goblin.Core/Goblin.Core.Web/
 
-COPY src/Cross/Goblin.Api_Base.Core/*.csproj ./src/Cross/Goblin.Api_Base.Core/
-COPY src/Cross/Goblin.Api_Base.Mapper/*.csproj ./src/Cross/Goblin.Api_Base.Mapper/
-COPY src/Cross/Goblin.Api_Base.Share/*.csproj ./src/Cross/Goblin.Api_Base.Share/
+COPY src/Cross/Goblin.BlogCrawler.Core/*.csproj ./src/Cross/Goblin.BlogCrawler.Core/
+COPY src/Cross/Goblin.BlogCrawler.Mapper/*.csproj ./src/Cross/Goblin.BlogCrawler.Mapper/
+COPY src/Cross/Goblin.BlogCrawler.Share/*.csproj ./src/Cross/Goblin.BlogCrawler.Share/
 
-COPY src/Repository/Goblin.Api_Base.Contract.Repository/*.csproj ./src/Repository/Goblin.Api_Base.Contract.Repository/
-COPY src/Repository/Goblin.Api_Base.Repository/*.csproj ./src/Repository/Goblin.Api_Base.Repository/
+COPY src/Repository/Goblin.BlogCrawler.Contract.Repository/*.csproj ./src/Repository/Goblin.BlogCrawler.Contract.Repository/
+COPY src/Repository/Goblin.BlogCrawler.Repository/*.csproj ./src/Repository/Goblin.BlogCrawler.Repository/
 
-COPY src/Service/Goblin.Api_Base.Contract.Service/*.csproj ./src/Service/Goblin.Api_Base.Contract.Service/
-COPY src/Service/Goblin.Api_Base.Service/*.csproj ./src/Service/Goblin.Api_Base.Service/
+COPY src/Service/Goblin.BlogCrawler.Contract.Service/*.csproj ./src/Service/Goblin.BlogCrawler.Contract.Service/
+COPY src/Service/Goblin.BlogCrawler.Service/*.csproj ./src/Service/Goblin.BlogCrawler.Service/
 
-COPY src/Web/Goblin.Api_Base/*.csproj ./src/Web/Goblin.Api_Base/
+COPY src/Web/Goblin.BlogCrawler/*.csproj ./src/Web/Goblin.BlogCrawler/
 
 RUN dotnet restore
 
@@ -27,17 +27,17 @@ RUN dotnet restore
 COPY Goblin.Core/Goblin.Core/. ./Goblin.Core/Goblin.Core/
 COPY Goblin.Core/Goblin.Core.Web/. ./Goblin.Core/Goblin.Core.Web/
 
-COPY src/Cross/Goblin.Api_Base.Core/. ./src/Cross/Goblin.Api_Base.Core/
-COPY src/Cross/Goblin.Api_Base.Mapper/. ./src/Cross/Goblin.Api_Base.Mapper/
-COPY src/Cross/Goblin.Api_Base.Share/. ./src/Cross/Goblin.Api_Base.Share/
+COPY src/Cross/Goblin.BlogCrawler.Core/. ./src/Cross/Goblin.BlogCrawler.Core/
+COPY src/Cross/Goblin.BlogCrawler.Mapper/. ./src/Cross/Goblin.BlogCrawler.Mapper/
+COPY src/Cross/Goblin.BlogCrawler.Share/. ./src/Cross/Goblin.BlogCrawler.Share/
 
-COPY src/Repository/Goblin.Api_Base.Contract.Repository/. ./src/Repository/Goblin.Api_Base.Contract.Repository/
-COPY src/Repository/Goblin.Api_Base.Repository/. ./src/Repository/Goblin.Api_Base.Repository/
+COPY src/Repository/Goblin.BlogCrawler.Contract.Repository/. ./src/Repository/Goblin.BlogCrawler.Contract.Repository/
+COPY src/Repository/Goblin.BlogCrawler.Repository/. ./src/Repository/Goblin.BlogCrawler.Repository/
 
-COPY src/Service/Goblin.Api_Base.Contract.Service/. ./src/Service/Goblin.Api_Base.Contract.Service/
-COPY src/Service/Goblin.Api_Base.Service/. ./src/Service/Goblin.Api_Base.Service/
+COPY src/Service/Goblin.BlogCrawler.Contract.Service/. ./src/Service/Goblin.BlogCrawler.Contract.Service/
+COPY src/Service/Goblin.BlogCrawler.Service/. ./src/Service/Goblin.BlogCrawler.Service/
 
-COPY src/Web/Goblin.Api_Base/. ./src/Web/Goblin.Api_Base/
+COPY src/Web/Goblin.BlogCrawler/. ./src/Web/Goblin.BlogCrawler/
 
 WORKDIR /source
 RUN dotnet publish -c release -o /publish --no-restore
@@ -46,4 +46,4 @@ RUN dotnet publish -c release -o /publish --no-restore
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /publish
 COPY --from=build /publish ./
-ENTRYPOINT ["dotnet", "Goblin.Api_Base.dll"]
+ENTRYPOINT ["dotnet", "Goblin.BlogCrawler.dll"]

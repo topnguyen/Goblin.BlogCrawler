@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Goblin.BlogCrawler</name>
+    </assembly>
+    <members>
+        <member name="M:Goblin.BlogCrawler.Controllers.PostController.GetPaged(Goblin.BlogCrawler.Share.Models.GoblinBlogCrawlerGetPagedPostModel,System.Threading.CancellationToken)">
+            <summary>
+                Get Paged Post Crawled
+            </summary>
+            <param name="model"></param>
+            <param name="cancellationToken"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Goblin.BlogCrawler.Share</name>
+    </assembly>
+    <members>
+        <member name="F:Goblin.BlogCrawler.Share.GoblinBlogCrawlerEndpoints.GetPagedPost">
+            <summary>
+                HTTP Method: POST
+            </summary>
+        </member>
+    </members>
+</doc>

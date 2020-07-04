@@ -168,7 +168,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             if (string.IsNullOrWhiteSpace(stopAtPostUrl))
             {
-                if (pageNo == 3)
+                if (pageNo == 10)
                 {
                     return postUrls;
                 }

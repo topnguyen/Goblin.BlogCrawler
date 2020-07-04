@@ -64,55 +64,16 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             var postsMetadata = new List<Elect.Core.CrawlerUtils.Models.MetadataModel>();
 
-            bool isContainLastCrawledUrl = false;
-            
-            for (int i = 0; i < postUrls.Count; i++)
+            foreach (var url in postUrls)
             {
-                var listUrlTemp = new List<string>();
-                
-                for (int j = 0; j < 5; j++)
-                {
-                    if (i >= postUrls.Count)
-                    {
-                        break;
-                    }
-
-                    var url = postUrls[i];
-
-                    if (url == sourceEntity.LastCrawledPostUrl)
-                    {
-                        isContainLastCrawledUrl = true;
-                        break;
-                    }
-
-                    listUrlTemp.Add(url);
-                    
-                    i++;
-                }
-
-                if (isContainLastCrawledUrl)
+                if (url == sourceEntity.LastCrawledPostUrl)
                 {
                     break;
                 }
                 
-                var postsMetadataTemp = await CrawlerHelper.GetListMetadataAsync(listUrlTemp.ToArray());
+                var postMetadata = await CrawlerHelper.GetMetadataByUrlAsync(url).ConfigureAwait(true);
 
-                foreach (var tempUrl in listUrlTemp)
-                {
-                    var postMetaDataTemp = postsMetadataTemp.FirstOrDefault(x => 
-                        x.OriginalUrl.Trim('/') == tempUrl.Trim('/') ||
-                        x.Url.Trim('/') == tempUrl.Trim('/')
-                        );
-
-                    if (postMetaDataTemp != null)
-                    {
-                        postsMetadata.Add(postMetaDataTemp);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Mismatch");
-                    }
-                }
+                postsMetadata.Add(postMetadata);
             }
 
             using var transaction = await GoblinUnitOfWork.BeginTransactionAsync(cancellationToken).ConfigureAwait(true);

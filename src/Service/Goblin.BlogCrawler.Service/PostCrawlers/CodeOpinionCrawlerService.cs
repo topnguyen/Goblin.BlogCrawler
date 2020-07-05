@@ -115,9 +115,24 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 .Select(x => x.Href)
                 .ToList();
 
-            if (!string.IsNullOrWhiteSpace(stopAtPostUrl) && postUrls.Contains(stopAtPostUrl))
+            if (!string.IsNullOrWhiteSpace(stopAtPostUrl))
             {
-                return postUrls;
+                var stopAtPostUrlPath = stopAtPostUrl
+                    .Replace("http://", string.Empty)
+                    .Replace("https://", string.Empty)
+                    .Trim('/');
+
+                var postUrlsPath =
+                    postUrls
+                        .Select(x => 
+                            x.Replace("http://", string.Empty)
+                            .Replace("https://", string.Empty)
+                            .Trim('/'));
+
+                if (postUrlsPath.Contains(stopAtPostUrlPath))
+                {
+                    return postUrls;
+                }
             }
 
             if (pageNo == 20)

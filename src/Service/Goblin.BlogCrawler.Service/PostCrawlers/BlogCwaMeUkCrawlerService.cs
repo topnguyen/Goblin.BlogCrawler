@@ -79,7 +79,9 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             
             if (postUrls.Any())
             {
-                postsMetadata = await CrawlerHelper.GetListMetadataAsync(postUrls.ToArray()).ConfigureAwait(true);
+                var postUrlsArray = postUrls.Distinct().ToArray();
+                
+                postsMetadata = await CrawlerHelper.GetListMetadataAsync(postUrlsArray).ConfigureAwait(true);
             }
 
             using var transaction = await GoblinUnitOfWork.BeginTransactionAsync(cancellationToken).ConfigureAwait(true);
@@ -178,7 +180,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             if (string.IsNullOrWhiteSpace(stopAtPostUrl))
             {
-                if (pageNo == 3)
+                if (pageNo == 20)
                 {
                     return postUrls;
                 }

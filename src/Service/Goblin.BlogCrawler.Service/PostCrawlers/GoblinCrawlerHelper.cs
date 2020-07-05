@@ -44,7 +44,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             return BrowsingContext.New(browsingConfig);
         }
 
-        public static async Task<List<PostEntity>> GetAndSavePostEntitiesAsync(List<MetadataModel> metadataModels, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
+        public static async Task<List<PostEntity>> GetAndSavePostEntitiesAsync(List<MetadataModel> metadataModels, DateTimeOffset crawledTime, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
         {
             var postEntities = new List<PostEntity>();
             
@@ -60,6 +60,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     SiteName = postMetadata.SiteName,
                     AuthorName = postMetadata.Author,
                     AuthorAvatarUrl = null,
+                    PublishTime = crawledTime,
+                    LastCrawledTime = crawledTime
                 };
 
                 // Handle Publish Time

@@ -89,7 +89,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             // Posts Metadata to Post Crawled Database
             
-            await GoblinCrawlerHelper.GetAndSavePostEntitiesAsync(postsMetadata, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
+            await GoblinCrawlerHelper.GetAndSavePostEntitiesAsync(postsMetadata, startTime, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
 
             // Update Source
             

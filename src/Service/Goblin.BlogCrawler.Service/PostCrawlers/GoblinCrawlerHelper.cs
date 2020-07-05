@@ -60,8 +60,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     var url = postUrl.Trim('/');
 
                     var postMetadata = postsMetadataTemp.FirstOrDefault(x =>
-                        x.OriginalUrl.Trim('/') == url ||
-                        x.Url.Trim('/') == url
+                        x.OriginalUrl?.Trim('/') == url ||
+                        x.Url?.Trim('/') == url
                     );
 
                     if (postMetadata != null)

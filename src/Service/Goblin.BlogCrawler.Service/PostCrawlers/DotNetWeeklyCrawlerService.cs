@@ -162,6 +162,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 .OfType<IHtmlAnchorElement>()
                 .Select(x => x.Href.Trim('/'))
                 .ToList();
+
+            postUrlsInDotNetWeekly = postUrlsInDotNetWeekly.Distinct().ToList();
          
             var concurrentBag =  new ConcurrentBag<KeyValuePair<string, string>>();
             

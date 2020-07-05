@@ -23,12 +23,14 @@ namespace Goblin.BlogCrawler.Service
         private readonly ICrawlerService<BlogCwaMeUkCrawlerService> _blogCwaMeUkCrawlerService;
         private readonly ICrawlerService<DotNetWeeklyCrawlerService> _dotNetWeeklyCrawlerService;
         private readonly ICrawlerService<HanselManCrawlerService> _hanselManCrawlerService;
+        private readonly ICrawlerService<HaackedCrawlerService> _haackedCrawlerService;
 
         public PostService(IGoblinUnitOfWork goblinUnitOfWork, 
             IGoblinRepository<PostEntity> postRepo,
             ICrawlerService<BlogCwaMeUkCrawlerService> blogCwaMeUkCrawlerService,
             ICrawlerService<DotNetWeeklyCrawlerService> dotNetWeeklyCrawlerService,
-            ICrawlerService<HanselManCrawlerService> hanselManCrawlerService
+            ICrawlerService<HanselManCrawlerService> hanselManCrawlerService,
+            ICrawlerService<HaackedCrawlerService> haackedCrawlerService
         ) : base(
             goblinUnitOfWork)
         {
@@ -36,6 +38,7 @@ namespace Goblin.BlogCrawler.Service
             _blogCwaMeUkCrawlerService = blogCwaMeUkCrawlerService;
             _dotNetWeeklyCrawlerService = dotNetWeeklyCrawlerService;
             _hanselManCrawlerService = hanselManCrawlerService;
+            _haackedCrawlerService = haackedCrawlerService;
         }
 
         public Task<GoblinApiPagedResponseModel<GoblinBlogCrawlerPostModel>> GetPagedAsync(
@@ -128,6 +131,9 @@ namespace Goblin.BlogCrawler.Service
             
             RecurringJob.RemoveIfExists(nameof(HanselManCrawlerService));
             RecurringJob.AddOrUpdate(nameof(HanselManCrawlerService), () => _hanselManCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime5HoursPerTime);
+
+            RecurringJob.RemoveIfExists(nameof(HaackedCrawlerService));
+            RecurringJob.AddOrUpdate(nameof(HaackedCrawlerService), () => _haackedCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime5HoursPerTime);
 
             RecurringJob.RemoveIfExists(nameof(DotNetWeeklyCrawlerService));
             RecurringJob.AddOrUpdate(nameof(DotNetWeeklyCrawlerService), () => _dotNetWeeklyCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime7HoursPerTime);

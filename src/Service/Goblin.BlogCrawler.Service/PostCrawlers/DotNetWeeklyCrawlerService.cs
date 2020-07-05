@@ -183,7 +183,21 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 
             }, maxDegreeOfParallelism: 100);
 
-            var postUrls = postUrlsConcurrentBag.ToList();
+            var postUrlsTemp = postUrlsConcurrentBag.ToList();
+            
+            var postUrls = new List<string>();
+
+            foreach (var postUrlInDotNetWeekly in postUrlsInDotNetWeekly)
+            {
+                var url = postUrlInDotNetWeekly.Trim('/');
+
+                var postUrl = postUrlsTemp.FirstOrDefault(x => x?.Trim('/') == url);
+
+                if (postUrl != null)
+                {
+                    postUrls.Add(postUrl);
+                }
+            }
 
             return postUrls;
         }

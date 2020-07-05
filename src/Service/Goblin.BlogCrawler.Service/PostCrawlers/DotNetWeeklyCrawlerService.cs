@@ -90,7 +90,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             sourceEntity.LastCrawlStartTime = startTime;
             sourceEntity.LastCrawlEndTime = GoblinDateTimeHelper.SystemTimeNow;
             sourceEntity.TimeSpent = sourceEntity.LastCrawlEndTime.Subtract(sourceEntity.LastCrawlStartTime);
-            sourceEntity.TotalPostCrawled = postsMetadata.Count;
+            sourceEntity.TotalPostCrawledLastTime = postsMetadata.Count;
+            sourceEntity.TotalPostCrawled += postsMetadata.Count;
 
             if (!string.IsNullOrWhiteSpace(postsMetadata.FirstOrDefault()?.Url))
             {

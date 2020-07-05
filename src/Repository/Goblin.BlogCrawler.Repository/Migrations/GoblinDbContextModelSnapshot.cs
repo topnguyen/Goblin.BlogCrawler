@@ -140,6 +140,9 @@ namespace Goblin.BlogCrawler.Repository.Migrations
                     b.Property<long>("TotalPostCrawled")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("TotalPostCrawledLastTime")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Url")
                         .HasColumnType("nvarchar(450)");
 

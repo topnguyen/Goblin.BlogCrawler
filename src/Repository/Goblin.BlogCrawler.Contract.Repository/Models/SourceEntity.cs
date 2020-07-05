@@ -14,8 +14,10 @@ namespace Goblin.BlogCrawler.Contract.Repository.Models
         
         public DateTimeOffset LastCrawlEndTime { get; set; }
 
+        public long TotalPostCrawledLastTime { get; set; }
+        
         public long TotalPostCrawled { get; set; }
-
+        
         public TimeSpan TimeSpent { get; set; }
     }
 }

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Goblin.BlogCrawler.Repository.Migrations
 {
     [DbContext(typeof(GoblinDbContext))]
-    [Migration("20200704151819_Identity")]
+    [Migration("20200705160101_Identity")]
     partial class Identity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -140,6 +140,9 @@ namespace Goblin.BlogCrawler.Repository.Migrations
                         .HasColumnType("time");
 
                     b.Property<long>("TotalPostCrawled")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalPostCrawledLastTime")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Url")

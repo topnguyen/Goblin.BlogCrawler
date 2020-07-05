@@ -10,7 +10,6 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Dasync.Collections;
 using Elect.DI.Attributes;
-using Flurl;
 using Goblin.BlogCrawler.Contract.Repository.Interfaces;
 using Goblin.BlogCrawler.Contract.Repository.Models;
 using Goblin.BlogCrawler.Contract.Service;
@@ -24,7 +23,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
     {
         public string Name { get; } = "dotNET Weekly";
 
-        public string Domain { get; } = "https://www.dotnetweekly.com/";
+        public string Domain { get; } = "https://www.dotnetweekly.com";
 
         private int _weekNow;
 
@@ -116,7 +115,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
         {
             using var browsingContext = GoblinCrawlerHelper.GetIBrowsingContext();
 
-            var endpoint = Domain.AppendPathSegment($"week/{week}/year/{year}");
+            var endpoint = $"{Domain}/week/{week}/year/{year}";
 
             var htmlDocument = await browsingContext.OpenAsync(endpoint, cancellation: cancellationToken)
                 .ConfigureAwait(true);

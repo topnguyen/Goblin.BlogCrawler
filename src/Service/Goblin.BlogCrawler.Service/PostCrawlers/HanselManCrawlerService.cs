@@ -14,17 +14,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Goblin.BlogCrawler.Service.PostCrawlers
 {
-    [ScopedDependency(ServiceType = typeof(ICrawlerService<BlogCwaMeUkCrawlerService>))]
-    public class BlogCwaMeUkCrawlerService : Base.Service, ICrawlerService<BlogCwaMeUkCrawlerService>
+    [ScopedDependency(ServiceType = typeof(ICrawlerService<HanselManCrawlerService>))]
+    public class HanselManCrawlerService : Base.Service, ICrawlerService<HanselManCrawlerService>
     {
-        public string Name { get; } = "The Morning Brew";
+        public string Name { get; } = "Scott Hanselman";
 
-        public string Domain { get; } = "http://blog.cwa.me.uk";
+        public string Domain { get; } = "https://www.hanselman.com/blog/";
 
         private readonly IGoblinRepository<SourceEntity> _sourceRepo;
         private readonly IGoblinRepository<PostEntity> _postRepo;
 
-        public BlogCwaMeUkCrawlerService(IGoblinUnitOfWork goblinUnitOfWork,
+        public HanselManCrawlerService(IGoblinUnitOfWork goblinUnitOfWork,
             IGoblinRepository<SourceEntity> sourceRepo,
             IGoblinRepository<PostEntity> postRepo
         )
@@ -58,7 +58,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
             }
 
-            var postUrlsTemp = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
+            var postUrlsTemp = await GetPostUrlAsync(0, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
 
             var postUrls = postUrlsTemp.TakeWhile(url => url != sourceEntity.LastCrawledPostUrl).ToList();
 
@@ -99,13 +99,13 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
         {
             using var browsingContext = GoblinCrawlerHelper.GetIBrowsingContext();
 
-            var endpoint = $"{Domain}/page/{pageNo}";
+            var endpoint = $"{Domain}?page={pageNo}";
 
             var htmlDocument = await browsingContext.OpenAsync(endpoint, cancellation: cancellationToken)
                 .ConfigureAwait(true);
 
             var postUrls = htmlDocument
-                .QuerySelectorAll("div.post-content li a")
+                .QuerySelectorAll(".TitleLinkStyle")
                 .OfType<IHtmlAnchorElement>()
                 .Select(x => x.Href)
                 .ToList();

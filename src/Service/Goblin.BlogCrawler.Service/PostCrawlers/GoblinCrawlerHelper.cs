@@ -1,6 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Io.Network;
+using Elect.Core.CrawlerUtils.Models;
+using Goblin.BlogCrawler.Contract.Repository.Interfaces;
+using Goblin.BlogCrawler.Contract.Repository.Models;
 
 namespace Goblin.BlogCrawler.Service.PostCrawlers
 {
@@ -35,6 +42,73 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 .WithDefaultLoader();
 
             return BrowsingContext.New(browsingConfig);
+        }
+
+        public static async Task<List<PostEntity>> GetAndSavePostEntitiesAsync(List<MetadataModel> metadataModels, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
+        {
+            var postEntities = new List<PostEntity>();
+            
+            // Posts Metadata to Post Crawled Database
+            foreach (var postMetadata in metadataModels)
+            {
+                var postEntity = new PostEntity
+                {
+                    Url = postMetadata.Url,
+                    Title = postMetadata.Title,
+                    ImageUrl = postMetadata.Image,
+                    Tags = string.Empty,
+                    SiteName = postMetadata.SiteName,
+                    AuthorName = postMetadata.Author,
+                    AuthorAvatarUrl = null,
+                };
+
+                // Handle Publish Time
+
+                var publishedTimeMetaTag =
+                    postMetadata.MetaTags.FirstOrDefault(x =>
+                        x.Attributes.Any(y => y.Value.Contains("published_time")));
+
+                if (publishedTimeMetaTag != null)
+                {
+                    if (publishedTimeMetaTag.Attributes.TryGetValue("content", out var content))
+                    {
+                        if (DateTimeOffset.TryParse(content, out var publishedTime))
+                        {
+                            postEntity.PublishTime = publishedTime;
+                        }
+                    }
+                }
+
+                // Handle Tag
+
+                var tagsMetaTags = postMetadata.MetaTags.Where(x => x.Attributes.Any(y => y.Value.Contains("tag")))
+                    .ToList();
+
+                if (tagsMetaTags.Any())
+                {
+                    foreach (var tagsMetaTag in tagsMetaTags)
+                    {
+                        if (tagsMetaTag.Attributes.TryGetValue("content", out var content))
+                        {
+                            postEntity.Tags += $",{content}";
+                        }
+                    }
+
+                    postEntity.Tags = postEntity.Tags.Trim(',');
+                }
+                
+                // Save to Database
+                
+                postRepo.Add(postEntity);
+
+                await goblinUnitOfWork.SaveChangesAsync().ConfigureAwait(true);
+
+                // Add to Result
+                
+                postEntities.Add(postEntity);
+            }
+
+            return postEntities;
         }
     }
 }

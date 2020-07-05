@@ -21,15 +21,18 @@ namespace Goblin.BlogCrawler.Service
     {
         private readonly IGoblinRepository<PostEntity> _postRepo;
         private readonly ICrawlerService<BlogCwaMeUkCrawlerService> _blogCwaMeUkCrawlerService;
+        private readonly ICrawlerService<DotNetWeeklyCrawlerService> _dotNetWeeklyCrawlerService;
 
         public PostService(IGoblinUnitOfWork goblinUnitOfWork, 
             IGoblinRepository<PostEntity> postRepo,
-            ICrawlerService<BlogCwaMeUkCrawlerService> blogCwaMeUkCrawlerService
+            ICrawlerService<BlogCwaMeUkCrawlerService> blogCwaMeUkCrawlerService,
+            ICrawlerService<DotNetWeeklyCrawlerService> dotNetWeeklyCrawlerService
         ) : base(
             goblinUnitOfWork)
         {
             _postRepo = postRepo;
             _blogCwaMeUkCrawlerService = blogCwaMeUkCrawlerService;
+            _dotNetWeeklyCrawlerService = dotNetWeeklyCrawlerService;
         }
 
         public Task<GoblinApiPagedResponseModel<GoblinBlogCrawlerPostModel>> GetPagedAsync(
@@ -104,14 +107,19 @@ namespace Goblin.BlogCrawler.Service
 
         public Task InitCrawlerJobAsync(CancellationToken cancellationToken = default)
         {
-            var cronTime = "4 */4 * * *"; // 4 hours / 1 time
+            var cronTime3HoursPerTime = "3 */3 * * *";
+            
+            var cronTime7HoursPerTime = "7 */7 * * *";
 
             if (EnvHelper.IsDevelopment())
             {
-                cronTime = Cron.Never();
+                cronTime3HoursPerTime = Cron.Never();
+                cronTime7HoursPerTime = Cron.Never();
             }
 
-            RecurringJob.AddOrUpdate(nameof(BlogCwaMeUkCrawlerService), () => _blogCwaMeUkCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime);
+            RecurringJob.AddOrUpdate(nameof(BlogCwaMeUkCrawlerService), () => _blogCwaMeUkCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime3HoursPerTime);
+            
+            RecurringJob.AddOrUpdate(nameof(DotNetWeeklyCrawlerService), () => _dotNetWeeklyCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime7HoursPerTime);
 
             return Task.CompletedTask;
         }

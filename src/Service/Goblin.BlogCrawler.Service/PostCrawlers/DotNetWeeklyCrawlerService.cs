@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
+using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using Dasync.Collections;
 using Elect.Core.CrawlerUtils;
 using Elect.Core.CrawlerUtils.Models;
 using Elect.DI.Attributes;
@@ -17,17 +21,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Goblin.BlogCrawler.Service.PostCrawlers
 {
-    [ScopedDependency(ServiceType = typeof(ICrawlerService<BlogCwaMeUkCrawlerService>))]
-    public class BlogCwaMeUkCrawlerService : Base.Service, ICrawlerService<BlogCwaMeUkCrawlerService>
+    [ScopedDependency(ServiceType = typeof(ICrawlerService<DotNetWeeklyCrawlerService>))]
+    public class DotNetWeeklyCrawlerService : Base.Service, ICrawlerService<DotNetWeeklyCrawlerService>
     {
-        public string Name { get; } = "The Morning Brew";
+        public string Name { get; } = "dotNET Weekly";
 
-        public string Domain { get; } = "http://blog.cwa.me.uk/";
+        public string Domain { get; } = "https://www.dotnetweekly.com/";
+
+        private int _weekNow;
+
+        private int _yearNow;
 
         private readonly IGoblinRepository<SourceEntity> _sourceRepo;
         private readonly IGoblinRepository<PostEntity> _postRepo;
 
-        public BlogCwaMeUkCrawlerService(IGoblinUnitOfWork goblinUnitOfWork,
+        public DotNetWeeklyCrawlerService(IGoblinUnitOfWork goblinUnitOfWork,
             IGoblinRepository<SourceEntity> sourceRepo,
             IGoblinRepository<PostEntity> postRepo
         )
@@ -35,6 +43,13 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
         {
             _sourceRepo = sourceRepo;
             _postRepo = postRepo;
+
+            var dateTimeNow = GoblinDateTimeHelper.SystemTimeNow;
+
+            _weekNow = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(dateTimeNow.DateTime,
+                CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+
+            _yearNow = dateTimeNow.Year;
         }
 
         public async Task CrawlPostsAsync(CancellationToken cancellationToken = default)
@@ -61,8 +76,9 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
             }
 
-            var postUrlsTemp = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken)
-                .ConfigureAwait(true);
+            var postUrlsTemp =
+                    await GetPostUrlAsync(_weekNow, _yearNow, sourceEntity.LastCrawledPostUrl, cancellationToken)
+                    .ConfigureAwait(true);
 
             var postUrls = new List<string>();
 
@@ -90,9 +106,9 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             // Posts Metadata to Post Crawled Database
             
             await GoblinCrawlerHelper.GetAndSavePostEntitiesAsync(postsMetadata, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
-
-            // Update Source
             
+            // Update Source
+
             sourceEntity.LastCrawlStartTime = startTime;
             sourceEntity.LastCrawlEndTime = GoblinDateTimeHelper.SystemTimeNow;
             sourceEntity.TimeSpent = sourceEntity.LastCrawlEndTime.Subtract(sourceEntity.LastCrawlStartTime);
@@ -116,37 +132,80 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             transaction.Commit();
         }
 
-        private async Task<List<string>> GetPostUrlAsync(int pageNo, string stopAtPostUrl,
+        private async Task<List<string>> GetPostUrlAsync(int week, int year, string stopAtPostUrl,
             CancellationToken cancellationToken = default)
         {
             using var browsingContext = GoblinCrawlerHelper.GetIBrowsingContext();
 
-            var endpoint = Domain.AppendPathSegment($"page/{pageNo}");
+            var endpoint = Domain.AppendPathSegment($"week/{week}/year/{year}");
 
             var htmlDocument = await browsingContext.OpenAsync(endpoint, cancellation: cancellationToken)
                 .ConfigureAwait(true);
 
-            var postUrls = htmlDocument
-                .QuerySelectorAll("div.post-content li a")
-                .OfType<IHtmlAnchorElement>()
-                .Select(x => x.Href)
-                .ToList();
+            var postUrls = await GetPostUrlsAsync(browsingContext, htmlDocument).ConfigureAwait(true);
 
             if (!string.IsNullOrWhiteSpace(stopAtPostUrl) && postUrls.Contains(stopAtPostUrl))
             {
                 return postUrls;
             }
 
-            if (pageNo == 20)
+            if (week == 1)
+            {
+                week = 52;
+                
+                year--;
+                
+                _weekNow += 52;
+            }
+            else
+            {
+                week--;
+            }
+
+            int diffWeek = _weekNow - week;
+
+            // not get posts belong to older 8 weeks (2 months)
+            if (diffWeek > 8)
             {
                 return postUrls;
             }
 
-            pageNo++;
-
-            var nextPagePostUrls = await GetPostUrlAsync(pageNo, stopAtPostUrl, cancellationToken);
+            var nextPagePostUrls = await GetPostUrlAsync(week, year, stopAtPostUrl, cancellationToken);
 
             postUrls.AddRange(nextPagePostUrls);
+
+            return postUrls;
+        }
+
+        private static async Task<List<string>> GetPostUrlsAsync(IBrowsingContext browsingContext, IDocument htmlDocument)
+        {            
+            var postUrlsInDotNetWeekly = htmlDocument
+                .QuerySelectorAll("div.link a")
+                .OfType<IHtmlAnchorElement>()
+                .Select(x => x.Href)
+                .ToList();
+         
+            var postUrlsConcurrentBag =  new ConcurrentBag<string>();
+            
+            await postUrlsInDotNetWeekly.ParallelForEachAsync(async postUrlInDotnetWeekly =>
+            {
+                var postDetailHtmlDocument = await browsingContext.OpenAsync(postUrlInDotnetWeekly)
+                    .ConfigureAwait(true);
+
+                var actualPostUrl = postDetailHtmlDocument
+                    .QuerySelectorAll("a.button")
+                    .OfType<IHtmlAnchorElement>()
+                    .Select(x => x.Href)
+                    .FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(actualPostUrl))
+                {
+                    postUrlsConcurrentBag.Add(actualPostUrl);
+                }
+                
+            }, maxDegreeOfParallelism: 100);
+
+            var postUrls = postUrlsConcurrentBag.ToList();
 
             return postUrls;
         }

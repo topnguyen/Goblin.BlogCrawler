@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Io.Network;
+using Elect.Core.CrawlerUtils;
 using Elect.Core.CrawlerUtils.Models;
 using Goblin.BlogCrawler.Contract.Repository.Interfaces;
 using Goblin.BlogCrawler.Contract.Repository.Models;
@@ -44,10 +45,37 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             return BrowsingContext.New(browsingConfig);
         }
 
-        public static async Task<List<PostEntity>> GetAndSavePostEntitiesAsync(List<MetadataModel> metadataModels, DateTimeOffset crawledTime, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
+        public static async Task<List<MetadataModel>> GetListMetadataModelsAsync(List<string> postUrls)
         {
-            var postEntities = new List<PostEntity>();
-            
+            var postsMetadata = new List<MetadataModel>();
+
+            if (postUrls.Any())
+            {
+                var postUrlsArray = postUrls.Distinct().ToArray();
+
+                var postsMetadataTemp = await CrawlerHelper.GetListMetadataAsync(postUrlsArray).ConfigureAwait(true);
+
+                foreach (var postUrl in postUrls)
+                {
+                    var url = postUrl.Trim('/');
+
+                    var postMetadata = postsMetadataTemp.FirstOrDefault(x =>
+                        x.OriginalUrl.Trim('/') == url ||
+                        x.Url.Trim('/') == url
+                    );
+
+                    if (postMetadata != null)
+                    {
+                        postsMetadata.Add(postMetadata);
+                    }
+                }
+            }
+
+            return postsMetadata;
+        }
+        
+        public static async Task SavePostEntitiesAsync(IEnumerable<MetadataModel> metadataModels, DateTimeOffset crawledTime, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
+        {
             // Posts Metadata to Post Crawled Database
             foreach (var postMetadata in metadataModels)
             {
@@ -104,13 +132,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 postRepo.Add(postEntity);
 
                 await goblinUnitOfWork.SaveChangesAsync().ConfigureAwait(true);
-
-                // Add to Result
-                
-                postEntities.Add(postEntity);
             }
-
-            return postEntities;
         }
     }
 }

@@ -117,8 +117,10 @@ namespace Goblin.BlogCrawler.Service
                 cronTime7HoursPerTime = Cron.Never();
             }
 
+            RecurringJob.RemoveIfExists(nameof(BlogCwaMeUkCrawlerService));
             RecurringJob.AddOrUpdate(nameof(BlogCwaMeUkCrawlerService), () => _blogCwaMeUkCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime3HoursPerTime);
             
+            RecurringJob.RemoveIfExists(nameof(DotNetWeeklyCrawlerService));
             RecurringJob.AddOrUpdate(nameof(DotNetWeeklyCrawlerService), () => _dotNetWeeklyCrawlerService.CrawlPostsAsync(CancellationToken.None), cronTime7HoursPerTime);
 
             return Task.CompletedTask;

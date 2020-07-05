@@ -5,8 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Html.Dom;
-using Elect.Core.CrawlerUtils;
-using Elect.Core.CrawlerUtils.Models;
 using Elect.DI.Attributes;
 using Flurl;
 using Goblin.BlogCrawler.Contract.Repository.Interfaces;
@@ -61,35 +59,17 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
             }
 
-            var postUrlsTemp = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken)
-                .ConfigureAwait(true);
+            var postUrlsTemp = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
 
-            var postUrls = new List<string>();
+            var postUrls = postUrlsTemp.TakeWhile(url => url != sourceEntity.LastCrawledPostUrl).ToList();
 
-            foreach (var url in postUrlsTemp)
-            {
-                if (url == sourceEntity.LastCrawledPostUrl)
-                {
-                    break;
-                }
-
-                postUrls.Add(url);
-            }
-
-            var postsMetadata = new List<MetadataModel>();
-
-            if (postUrls.Any())
-            {
-                var postUrlsArray = postUrls.Distinct().ToArray();
-
-                postsMetadata = await CrawlerHelper.GetListMetadataAsync(postUrlsArray).ConfigureAwait(true);
-            }
+            var postsMetadata = await GoblinCrawlerHelper.GetListMetadataModelsAsync(postUrls).ConfigureAwait(true);
 
             using var transaction = await GoblinUnitOfWork.BeginTransactionAsync(cancellationToken).ConfigureAwait(true);
 
             // Posts Metadata to Post Crawled Database
             
-            await GoblinCrawlerHelper.GetAndSavePostEntitiesAsync(postsMetadata, startTime, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
+            await GoblinCrawlerHelper.SavePostEntitiesAsync(postsMetadata, startTime, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
 
             // Update Source
             
@@ -116,8 +96,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             transaction.Commit();
         }
 
-        private async Task<List<string>> GetPostUrlAsync(int pageNo, string stopAtPostUrl,
-            CancellationToken cancellationToken = default)
+        private async Task<List<string>> GetPostUrlAsync(int pageNo, string stopAtPostUrl, CancellationToken cancellationToken = default)
         {
             using var browsingContext = GoblinCrawlerHelper.GetIBrowsingContext();
 

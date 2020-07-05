@@ -160,10 +160,10 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             var postUrlsInDotNetWeekly = htmlDocument
                 .QuerySelectorAll("div.link a")
                 .OfType<IHtmlAnchorElement>()
-                .Select(x => x.Href)
+                .Select(x => x.Href.Trim('/'))
                 .ToList();
          
-            var postUrlsConcurrentBag =  new ConcurrentBag<string>();
+            var concurrentBag =  new ConcurrentBag<KeyValuePair<string, string>>();
             
             await postUrlsInDotNetWeekly.ParallelForEachAsync(async postUrlInDotnetWeekly =>
             {
@@ -178,22 +178,22 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
                 if (!string.IsNullOrWhiteSpace(actualPostUrl))
                 {
-                    postUrlsConcurrentBag.Add(actualPostUrl);
+                    postUrlInDotnetWeekly = postUrlInDotnetWeekly.Trim('/');
+                    
+                    actualPostUrl = actualPostUrl.Trim('/');
+                    
+                    concurrentBag.Add(new KeyValuePair<string, string>(postUrlInDotnetWeekly, actualPostUrl));
                 }
                 
             }, maxDegreeOfParallelism: 100);
 
-            var postUrlsTemp = postUrlsConcurrentBag.ToList();
+            var postLinkedUrls = concurrentBag.ToList().ToDictionary(x => x.Key, x => x.Value);
             
             var postUrls = new List<string>();
 
             foreach (var postUrlInDotNetWeekly in postUrlsInDotNetWeekly)
             {
-                var url = postUrlInDotNetWeekly.Trim('/');
-
-                var postUrl = postUrlsTemp.FirstOrDefault(x => x?.Trim('/') == url);
-
-                if (postUrl != null)
+                if (postLinkedUrls.TryGetValue(postUrlInDotNetWeekly, out var postUrl))
                 {
                     postUrls.Add(postUrl);
                 }

@@ -137,7 +137,11 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             sourceEntity.LastCrawlEndTime = GoblinDateTimeHelper.SystemTimeNow;
             sourceEntity.TimeSpent = sourceEntity.LastCrawlEndTime.Subtract(sourceEntity.LastCrawlStartTime);
             sourceEntity.TotalPostCrawled = postsMetadata.Count;
-            sourceEntity.LastCrawledPostUrl = postsMetadata.FirstOrDefault()?.Url;
+
+            if (!string.IsNullOrWhiteSpace(postsMetadata.FirstOrDefault()?.Url))
+            {
+                sourceEntity.LastCrawledPostUrl = postsMetadata.FirstOrDefault()?.Url;
+            }
             
             _sourceRepo.Update(sourceEntity,
                 x => x.LastCrawlStartTime,

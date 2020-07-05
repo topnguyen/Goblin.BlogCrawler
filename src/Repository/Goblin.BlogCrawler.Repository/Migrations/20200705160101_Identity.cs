@@ -52,6 +52,7 @@ namespace Goblin.BlogCrawler.Repository.Migrations
                     LastCrawledPostUrl = table.Column<string>(nullable: true),
                     LastCrawlStartTime = table.Column<DateTimeOffset>(nullable: false),
                     LastCrawlEndTime = table.Column<DateTimeOffset>(nullable: false),
+                    TotalPostCrawledLastTime = table.Column<long>(nullable: false),
                     TotalPostCrawled = table.Column<long>(nullable: false),
                     TimeSpent = table.Column<TimeSpan>(nullable: false)
                 },

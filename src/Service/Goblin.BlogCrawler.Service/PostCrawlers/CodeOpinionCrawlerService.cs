@@ -87,6 +87,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 x => x.LastCrawlStartTime,
                 x => x.LastCrawlEndTime,
                 x => x.TimeSpent,
+                x => x.TotalPostCrawledLastTime,
                 x => x.TotalPostCrawled,
                 x => x.LastCrawledPostUrl
             );

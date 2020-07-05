@@ -84,47 +84,16 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     Url = postMetadata.Url,
                     Title = postMetadata.Title,
                     ImageUrl = postMetadata.Image,
-                    Tags = string.Empty,
                     SiteName = postMetadata.SiteName,
                     AuthorName = postMetadata.Author,
                     AuthorAvatarUrl = null,
-                    PublishTime = crawledTime,
+                    PublishTime = postMetadata.PublishedTime == default ? crawledTime : postMetadata.PublishedTime,
                     LastCrawledTime = crawledTime
                 };
 
-                // Handle Publish Time
-
-                var publishedTimeMetaTag =
-                    postMetadata.MetaTags.FirstOrDefault(x =>
-                        x.Attributes.Any(y => y.Value.Contains("published_time")));
-
-                if (publishedTimeMetaTag != null)
+                if (postMetadata.Tags?.Any() == true)
                 {
-                    if (publishedTimeMetaTag.Attributes.TryGetValue("content", out var content))
-                    {
-                        if (DateTimeOffset.TryParse(content, out var publishedTime))
-                        {
-                            postEntity.PublishTime = publishedTime;
-                        }
-                    }
-                }
-
-                // Handle Tag
-
-                var tagsMetaTags = postMetadata.MetaTags.Where(x => x.Attributes.Any(y => y.Value.Contains("tag")))
-                    .ToList();
-
-                if (tagsMetaTags.Any())
-                {
-                    foreach (var tagsMetaTag in tagsMetaTags)
-                    {
-                        if (tagsMetaTag.Attributes.TryGetValue("content", out var content))
-                        {
-                            postEntity.Tags += $",{content}";
-                        }
-                    }
-
-                    postEntity.Tags = postEntity.Tags.Trim(',');
+                    postEntity.Tags = string.Join(",", postMetadata.Tags);
                 }
                 
                 // Save to Database

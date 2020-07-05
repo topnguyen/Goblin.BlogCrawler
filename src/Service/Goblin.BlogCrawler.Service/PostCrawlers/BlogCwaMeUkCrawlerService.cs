@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Html.Dom;
 using Elect.Core.CrawlerUtils;
+using Elect.Core.CrawlerUtils.Models;
 using Elect.DI.Attributes;
 using Flurl;
 using Goblin.BlogCrawler.Contract.Repository.Interfaces;
@@ -60,20 +61,25 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                 await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
             }
             
-            var postUrls = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
+            var postUrlsTemp = await GetPostUrlAsync(1, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
 
-            var postsMetadata = new List<Elect.Core.CrawlerUtils.Models.MetadataModel>();
-
-            foreach (var url in postUrls)
+            var postUrls = new List<string>();
+            
+            foreach (var url in postUrlsTemp)
             {
                 if (url == sourceEntity.LastCrawledPostUrl)
                 {
                     break;
                 }
                 
-                var postMetadata = await CrawlerHelper.GetMetadataByUrlAsync(url).ConfigureAwait(true);
+                postUrls.Add(url);
+            }
 
-                postsMetadata.Add(postMetadata);
+            var postsMetadata = new List<MetadataModel>();
+            
+            if (postUrls.Any())
+            {
+                postsMetadata = await CrawlerHelper.GetListMetadataAsync(postUrls.ToArray()).ConfigureAwait(true);
             }
 
             using var transaction = await GoblinUnitOfWork.BeginTransactionAsync(cancellationToken).ConfigureAwait(true);
@@ -172,7 +178,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             if (string.IsNullOrWhiteSpace(stopAtPostUrl))
             {
-                if (pageNo == 10)
+                if (pageNo == 3)
                 {
                     return postUrls;
                 }

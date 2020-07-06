@@ -51,7 +51,9 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
             if (postUrls.Any())
             {
-                var postUrlsArray = postUrls.Distinct().ToArray();
+                postUrls = postUrls.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+                
+                var postUrlsArray = postUrls.ToArray();
 
                 var postsMetadataTemp = await CrawlerHelper.GetListMetadataAsync(postUrlsArray).ConfigureAwait(true);
 
@@ -61,8 +63,10 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     
                     postMetadata.Url = postMetadata.Url?.Trim().Trim('/').ToLowerInvariant();
                 }
+                
+                // Only take Post have Title
 
-                postsMetadataTemp = postsMetadataTemp.Where(x => !string.IsNullOrWhiteSpace(x.Url)).ToList();
+                postsMetadataTemp = postsMetadataTemp.Where(x => !string.IsNullOrWhiteSpace(x.Title)).ToList();
                 
                 foreach (var postUrl in postUrls)
                 {

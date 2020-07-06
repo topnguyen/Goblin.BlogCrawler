@@ -96,7 +96,9 @@ namespace Goblin.BlogCrawler.Service
 
             modelQuery = !string.IsNullOrWhiteSpace(model.SortBy)
                 ? modelQuery.OrderBy(orderByDynamicStatement)
-                : modelQuery.OrderByDescending(x => x.LastCrawledTime);
+                    .ThenBy(x => x.Title)
+                : modelQuery.OrderByDescending(x => x.LastCrawledTime)
+                    .ThenBy(x => x.Title);
 
             // Get Result
 

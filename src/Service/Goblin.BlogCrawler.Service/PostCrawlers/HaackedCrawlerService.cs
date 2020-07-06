@@ -56,7 +56,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             
             var currentPageNo = long.Parse(currentPageNoStr);
 
-            return currentPageNo >= 20;
+            return currentPageNo >= 5;
         }
 
         protected override Dictionary<string, string> GetNextPageUrlDictionary()

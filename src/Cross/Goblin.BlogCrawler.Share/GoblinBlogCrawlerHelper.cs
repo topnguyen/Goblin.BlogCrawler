@@ -2,15 +2,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Flurl.Http;
+using Flurl.Http.Configuration;
 using Goblin.Core.Constants;
 using Goblin.BlogCrawler.Share.Models;
 using Goblin.Core.Errors;
 using Goblin.Core.Models;
+using Goblin.Core.Settings;
 
 namespace Goblin.BlogCrawler.Share
 {
     public static class GoblinBlogCrawlerHelper
     {
+        public static readonly ISerializer JsonSerializer = new NewtonsoftJsonSerializer(GoblinJsonSetting.JsonSerializerSettings);
+        
         public static string Domain { get; set; } = string.Empty;
         
         public static string AuthorizationKey { get; set; } = string.Empty;
@@ -24,6 +28,10 @@ namespace Goblin.BlogCrawler.Share
                     .AppendPathSegment(GoblinBlogCrawlerEndpoints.GetPagedPost);
 
                 var userPagedMetaResponse = await endpoint
+                    .ConfigureRequest(x =>
+                    {
+                        x.JsonSerializer = JsonSerializer;
+                    })
                     .PostJsonAsync(model, cancellationToken: cancellationToken)
                     .ReceiveJson<GoblinApiPagedMetaResponseModel<GoblinBlogCrawlerGetPagedPostModel, GoblinBlogCrawlerPostModel>>()
                     .ConfigureAwait(true);

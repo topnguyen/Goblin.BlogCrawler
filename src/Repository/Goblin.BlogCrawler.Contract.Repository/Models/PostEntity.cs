@@ -4,9 +4,15 @@ namespace Goblin.BlogCrawler.Contract.Repository.Models
 {
     public class PostEntity : GoblinEntity
     {
+        /// <summary>
+        ///     This post token from what source
+        /// </summary>
+        public string SourceUrl { get; set; }
+
         // Post Info
         
         public string Url { get; set; }
+        
         public string Title { get; set; }
         
         public string Description { get; set; }

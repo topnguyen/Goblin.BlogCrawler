@@ -78,14 +78,15 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             return postsMetadata;
         }
         
-        public static async Task SavePostEntitiesAsync(IEnumerable<MetadataModel> metadataModels, DateTimeOffset crawledTime, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
+        public static async Task SavePostEntitiesAsync(string sourceDomain, IEnumerable<MetadataModel> metadataModels, DateTimeOffset crawledTime, IGoblinRepository<PostEntity> postRepo, IGoblinUnitOfWork goblinUnitOfWork)
         {
             // Posts Metadata to Post Crawled Database
             foreach (var postMetadata in metadataModels)
             {
                 var postEntity = new PostEntity
                 {
-                    Url = postMetadata.Url,
+                    SourceUrl = sourceDomain,
+                    Url = postMetadata.OriginalUrl,
                     Title = postMetadata.Title,
                     ImageUrl = postMetadata.Image,
                     SiteName = postMetadata.SiteName,

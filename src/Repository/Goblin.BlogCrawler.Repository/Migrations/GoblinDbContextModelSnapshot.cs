@@ -65,6 +65,9 @@ namespace Goblin.BlogCrawler.Repository.Migrations
                     b.Property<string>("SiteName")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Tags")
                         .HasColumnType("nvarchar(max)");
 

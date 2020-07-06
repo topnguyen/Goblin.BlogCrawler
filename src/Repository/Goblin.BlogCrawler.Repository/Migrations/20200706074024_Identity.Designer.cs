@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Goblin.BlogCrawler.Repository.Migrations
 {
     [DbContext(typeof(GoblinDbContext))]
-    [Migration("20200705160101_Identity")]
+    [Migration("20200706074024_Identity")]
     partial class Identity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,6 +66,9 @@ namespace Goblin.BlogCrawler.Repository.Migrations
 
                     b.Property<string>("SiteName")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tags")
                         .HasColumnType("nvarchar(max)");

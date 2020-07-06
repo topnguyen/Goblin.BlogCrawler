@@ -40,6 +40,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
             var dateTimeNow = GoblinDateTimeHelper.SystemTimeNow;
 
             _weekNow = _weekCurr = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(dateTimeNow.DateTime, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+
+            _yearCurr = dateTimeNow.Year;
         }
         
         protected override bool IsStopCrawling(List<string> postUrls)

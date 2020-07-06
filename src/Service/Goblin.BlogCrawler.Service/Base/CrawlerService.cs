@@ -66,9 +66,9 @@ namespace Goblin.BlogCrawler.Service.Base
             sourceEntity.TotalPostCrawledLastTime = postsMetadata.Count;
             sourceEntity.TotalPostCrawled += postsMetadata.Count;
 
-            if (!string.IsNullOrWhiteSpace(postsMetadata.FirstOrDefault()?.Url))
+            if (!string.IsNullOrWhiteSpace(postsMetadata.FirstOrDefault()?.OriginalUrl))
             {
-                sourceEntity.LastCrawledPostUrl = postsMetadata.FirstOrDefault()?.Url;
+                sourceEntity.LastCrawledPostUrl = postsMetadata.FirstOrDefault()?.OriginalUrl;
             }
 
             _sourceRepo.Update(sourceEntity,

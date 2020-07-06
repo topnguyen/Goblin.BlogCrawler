@@ -19,6 +19,7 @@ namespace Goblin.BlogCrawler.Repository.Migrations
                     CreatedBy = table.Column<long>(nullable: true),
                     LastUpdatedBy = table.Column<long>(nullable: true),
                     DeletedBy = table.Column<long>(nullable: true),
+                    SourceUrl = table.Column<string>(nullable: true),
                     Url = table.Column<string>(nullable: true),
                     Title = table.Column<string>(nullable: true),
                     Description = table.Column<string>(nullable: true),

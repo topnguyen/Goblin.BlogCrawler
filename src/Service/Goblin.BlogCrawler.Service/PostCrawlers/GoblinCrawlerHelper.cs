@@ -95,6 +95,7 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     Url = postMetadata.OriginalUrl,
                     Title = postMetadata.Title,
                     ImageUrl = postMetadata.Image,
+                    Description = postMetadata.Description,
                     SiteName = postMetadata.SiteName,
                     AuthorName = postMetadata.Author,
                     AuthorAvatarUrl = null,

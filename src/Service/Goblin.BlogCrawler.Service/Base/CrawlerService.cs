@@ -110,12 +110,19 @@ namespace Goblin.BlogCrawler.Service.Base
                 await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
             }
 
+            StopAtPostUrl =
+                sourceEntity.LastCrawledPostUrl
+                    ?.Replace("http://", string.Empty)
+                    .Replace("https://", string.Empty).Trim('/');
+
             return sourceEntity;
         }
 
         protected async Task<List<string>> CrawlPostUrlAsync(CancellationToken cancellationToken = default)
         {
-            var postsUrlCrawled = await BasicCrawlPostUrlAsync(UrlPathDictionary, cancellationToken).ConfigureAwait(true);
+            var urlPathDictionary = GetNextPageUrlDictionary();
+            
+            var postsUrlCrawled = await BasicCrawlPostUrlAsync(urlPathDictionary, cancellationToken).ConfigureAwait(true);
 
             return postsUrlCrawled;
         }

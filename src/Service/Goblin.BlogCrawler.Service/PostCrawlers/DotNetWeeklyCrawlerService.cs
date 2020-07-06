@@ -3,177 +3,108 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Dasync.Collections;
+using Elect.Core.DictionaryUtils;
 using Elect.DI.Attributes;
+using Flurl.Util;
 using Goblin.BlogCrawler.Contract.Repository.Interfaces;
 using Goblin.BlogCrawler.Contract.Repository.Models;
 using Goblin.BlogCrawler.Contract.Service;
 using Goblin.Core.DateTimeUtils;
-using Microsoft.EntityFrameworkCore;
 
 namespace Goblin.BlogCrawler.Service.PostCrawlers
 {
     [ScopedDependency(ServiceType = typeof(ICrawlerService<DotNetWeeklyCrawlerService>))]
-    public class DotNetWeeklyCrawlerService : Base.Service, ICrawlerService<DotNetWeeklyCrawlerService>
+    public class DotNetWeeklyCrawlerService : Base.CrawlerService, ICrawlerService<DotNetWeeklyCrawlerService>
     {
-        public string Name { get; } = "dotNET Weekly";
-
-        public string Domain { get; } = "https://www.dotnetweekly.com";
-
         private int _weekNow;
 
-        private int _yearNow;
+        private int _weekCurr;
 
-        private readonly IGoblinRepository<SourceEntity> _sourceRepo;
-        private readonly IGoblinRepository<PostEntity> _postRepo;
+        private int _yearCurr;
 
-        public DotNetWeeklyCrawlerService(IGoblinUnitOfWork goblinUnitOfWork,
-            IGoblinRepository<SourceEntity> sourceRepo,
-            IGoblinRepository<PostEntity> postRepo
-        )
-            : base(goblinUnitOfWork)
+        public DotNetWeeklyCrawlerService(IGoblinUnitOfWork goblinUnitOfWork, IGoblinRepository<SourceEntity> sourceRepo, IGoblinRepository<PostEntity> postRepo) : base(goblinUnitOfWork, sourceRepo, postRepo)
         {
-            _sourceRepo = sourceRepo;
-            _postRepo = postRepo;
+            Name = "dotNET Weekly";
+            
+            Domain = "https://www.dotnetweekly.com";
 
+            UrlPattern = $"{Domain}/week/{{week}}/year/{{year}}";
+
+            PostUrlQuerySelector = ".post-title a";
+            
             var dateTimeNow = GoblinDateTimeHelper.SystemTimeNow;
 
-            _weekNow = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(dateTimeNow.DateTime,
-                CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
-
-            _yearNow = dateTimeNow.Year;
+            _weekNow = _weekCurr = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(dateTimeNow.DateTime, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
         }
-
-        public async Task CrawlPostsAsync(CancellationToken cancellationToken = default)
+        
+        protected override bool IsStopCrawling(List<string> postUrls)
         {
-            var startTime = GoblinDateTimeHelper.SystemTimeNow;
+            var isContainStopAtPostUrl = IsContainStopAtPostUrl(postUrls);
 
-            var sourceEntity = await _sourceRepo
-                .Get(x => x.Url == Domain)
-                .FirstOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(true);
-
-            if (sourceEntity == null)
+            if (isContainStopAtPostUrl)
             {
-                sourceEntity = new SourceEntity
-                {
-                    Name = Name,
-                    Url = Domain,
-                    TimeSpent = TimeSpan.Zero,
-                    LastCrawledPostUrl = null
-                };
-
-                _sourceRepo.Add(sourceEntity);
-
-                await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
+                return true;
             }
-
-            var postUrlsTemp =  await GetPostUrlAsync(_weekNow, _yearNow, sourceEntity.LastCrawledPostUrl, cancellationToken).ConfigureAwait(true);
-
-            var postUrls = postUrlsTemp.TakeWhile(url => url != sourceEntity.LastCrawledPostUrl).ToList();
-
-            var postsMetadata = await GoblinCrawlerHelper.GetListMetadataModelsAsync(postUrls).ConfigureAwait(true);
-
-            using var transaction = await GoblinUnitOfWork.BeginTransactionAsync(cancellationToken).ConfigureAwait(true);
-
-            // Posts Metadata to Post Crawled Database
             
-            await GoblinCrawlerHelper.SavePostEntitiesAsync(postsMetadata, startTime, _postRepo, GoblinUnitOfWork).ConfigureAwait(true);
-            
-            // Update Source
-
-            sourceEntity.LastCrawlStartTime = startTime;
-            sourceEntity.LastCrawlEndTime = GoblinDateTimeHelper.SystemTimeNow;
-            sourceEntity.TimeSpent = sourceEntity.LastCrawlEndTime.Subtract(sourceEntity.LastCrawlStartTime);
-            sourceEntity.TotalPostCrawledLastTime = postsMetadata.Count;
-            sourceEntity.TotalPostCrawled += postsMetadata.Count;
-
-            if (!string.IsNullOrWhiteSpace(postsMetadata.FirstOrDefault()?.Url))
-            {
-                sourceEntity.LastCrawledPostUrl = postsMetadata.FirstOrDefault()?.Url;
-            }
-
-            _sourceRepo.Update(sourceEntity,
-                x => x.LastCrawlStartTime,
-                x => x.LastCrawlEndTime,
-                x => x.TimeSpent,
-                x => x.TotalPostCrawledLastTime,
-                x => x.TotalPostCrawled,
-                x => x.LastCrawledPostUrl
-            );
-
-            await GoblinUnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
-
-            transaction.Commit();
-        }
-
-        private async Task<List<string>> GetPostUrlAsync(int week, int year, string stopAtPostUrl,
-            CancellationToken cancellationToken = default)
-        {
-            using var browsingContext = GoblinCrawlerHelper.GetIBrowsingContext();
-
-            var endpoint = $"{Domain}/week/{week}/year/{year}";
-
-            var htmlDocument = await browsingContext.OpenAsync(endpoint, cancellation: cancellationToken)
-                .ConfigureAwait(true);
-
-            var postUrls = await GetPostUrlsAsync(browsingContext, htmlDocument).ConfigureAwait(true);
-
-            if (!string.IsNullOrWhiteSpace(stopAtPostUrl))
-            {
-                var stopAtPostUrlPath = stopAtPostUrl
-                    .Replace("http://", string.Empty)
-                    .Replace("https://", string.Empty)
-                    .Trim('/');
-
-                var postUrlsPath =
-                    postUrls
-                        .Select(x => 
-                            x.Replace("http://", string.Empty)
-                                .Replace("https://", string.Empty)
-                                .Trim('/'));
-
-                if (postUrlsPath.Contains(stopAtPostUrlPath))
-                {
-                    return postUrls;
-                }
-            }
-
-            if (week == 1)
-            {
-                week = 52;
-                
-                year--;
-                
-                _weekNow += 52;
-            }
-            else
-            {
-                week--;
-            }
-
-            int diffWeek = _weekNow - week;
+            var diffWeek = _weekNow - _weekCurr;
 
             // not get posts belong to older 8 weeks (2 months)
+            
             if (diffWeek > 8)
             {
-                return postUrls;
+                return true;
             }
 
-            var nextPagePostUrls = await GetPostUrlAsync(week, year, stopAtPostUrl, cancellationToken);
-
-            postUrls.AddRange(nextPagePostUrls);
-
-            return postUrls;
+            return false;
         }
 
-        private static async Task<List<string>> GetPostUrlsAsync(IBrowsingContext browsingContext, IDocument htmlDocument)
+        protected override Dictionary<string, string> GetNextPageUrlDictionary()
+        {
+            if (UrlPathDictionary?.Any() != true)
+            {
+                UrlPathDictionary = new Dictionary<string, string>
+                {
+                    {"{week}", _weekCurr.ToInvariantString()},
+                    {"{year}", _yearCurr.ToInvariantString()}
+                };
+
+                return UrlPathDictionary;
+            }
+
+            if (UrlPathDictionary.TryGetValue("{week}", out var currentWeekNoStr))
+            {
+                var currentWeekNo = long.Parse(currentWeekNoStr);
+
+                if (currentWeekNo == 1)
+                {
+                    _weekCurr = 52;
+                
+                    _yearCurr--;
+                
+                    _weekNow += 52;
+                }
+                else
+                {
+                    _weekCurr--;
+                }
+            }
+            
+            UrlPathDictionary.AddOrUpdate("{week}", _weekCurr.ToInvariantString());
+            
+            UrlPathDictionary.AddOrUpdate("{year}", _yearCurr.ToInvariantString());
+            
+            return UrlPathDictionary;
+        }
+
+        protected override async Task<List<string>> GetPostUrlsAsync(IBrowsingContext browsingContext, IDocument htmlDocument)
         {            
+            await htmlDocument.WaitForReadyAsync().ConfigureAwait(true);
+
             var postUrlsInDotNetWeekly = htmlDocument
                 .QuerySelectorAll("div.link a")
                 .OfType<IHtmlAnchorElement>()

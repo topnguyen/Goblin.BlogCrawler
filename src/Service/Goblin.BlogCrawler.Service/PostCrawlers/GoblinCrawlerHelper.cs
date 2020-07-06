@@ -55,14 +55,18 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
 
                 var postsMetadataTemp = await CrawlerHelper.GetListMetadataAsync(postUrlsArray).ConfigureAwait(true);
 
+                foreach (var postMetadata in postsMetadataTemp)
+                {
+                    postMetadata.OriginalUrl = postMetadata.OriginalUrl?.Trim().Trim('/').ToLowerInvariant();
+                    
+                    postMetadata.Url = postMetadata.Url?.Trim().Trim('/').ToLowerInvariant();
+                }
+                
                 foreach (var postUrl in postUrls)
                 {
-                    var url = postUrl.Trim('/');
+                    var url = postUrl.Trim().Trim('/').ToLowerInvariant();
 
-                    var postMetadata = postsMetadataTemp.FirstOrDefault(x =>
-                        x.OriginalUrl?.Trim('/') == url ||
-                        x.Url?.Trim('/') == url
-                    );
+                    var postMetadata = postsMetadataTemp.FirstOrDefault(x => x.OriginalUrl == url || x.Url == url);
 
                     if (postMetadata != null)
                     {

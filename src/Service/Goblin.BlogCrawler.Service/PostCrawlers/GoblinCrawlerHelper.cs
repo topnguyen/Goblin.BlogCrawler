@@ -61,6 +61,8 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     
                     postMetadata.Url = postMetadata.Url?.Trim().Trim('/').ToLowerInvariant();
                 }
+
+                postsMetadataTemp = postsMetadataTemp.Where(x => !string.IsNullOrWhiteSpace(x.Url)).ToList();
                 
                 foreach (var postUrl in postUrls)
                 {

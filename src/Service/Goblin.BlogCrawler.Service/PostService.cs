@@ -50,7 +50,7 @@ namespace Goblin.BlogCrawler.Service
         public Task<GoblinApiPagedResponseModel<GoblinBlogCrawlerPostModel>> GetPagedAsync(
             GoblinBlogCrawlerGetPagedPostModel model, CancellationToken cancellationToken = default)
         {
-            var query = _postRepo.Get();
+            var query = _postRepo.Get(x => x.ImageUrl != null && x.Title != null);
 
             // Filters
 

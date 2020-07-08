@@ -64,9 +64,9 @@ namespace Goblin.BlogCrawler.Service.PostCrawlers
                     postMetadata.Url = postMetadata.Url?.Trim().Trim('/').ToLowerInvariant();
                 }
                 
-                // Only take Post have Title
+                // Only take Post have Title or Image
 
-                postsMetadataTemp = postsMetadataTemp.Where(x => !string.IsNullOrWhiteSpace(x.Title)).ToList();
+                postsMetadataTemp = postsMetadataTemp.Where(x => !string.IsNullOrWhiteSpace(x.Title) && !string.IsNullOrWhiteSpace(x.Image)).ToList();
                 
                 foreach (var postUrl in postUrls)
                 {

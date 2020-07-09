@@ -1,11 +1,9 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 using Goblin.Core.Constants;
 using Goblin.BlogCrawler.Share.Models;
-using Goblin.Core.Errors;
 using Goblin.Core.Models;
 using Goblin.Core.Settings;
 
@@ -13,25 +11,36 @@ namespace Goblin.BlogCrawler.Share
 {
     public static class GoblinBlogCrawlerHelper
     {
-        public static readonly ISerializer JsonSerializer = new NewtonsoftJsonSerializer(GoblinJsonSetting.JsonSerializerSettings);
-        
         public static string Domain { get; set; } = string.Empty;
-        
+
         public static string AuthorizationKey { get; set; } = string.Empty;
+
+        public static readonly ISerializer JsonSerializer = new NewtonsoftJsonSerializer(GoblinJsonSetting.JsonSerializerSettings);
+
+        private static IFlurlRequest GetRequest(long? loggedInUserId)
+        {
+            var request = Domain.WithHeader(GoblinHeaderKeys.Authorization, AuthorizationKey);
+
+            if (loggedInUserId != null)
+            {
+                request = request.WithHeader(GoblinHeaderKeys.UserId, loggedInUserId);
+            }
+
+            request = request.ConfigureRequest(x =>
+            {
+                x.JsonSerializer = JsonSerializer;
+            });
+
+            return request;
+        }
 
         public static async Task<GoblinApiPagedMetaResponseModel<GoblinBlogCrawlerGetPagedPostModel, GoblinBlogCrawlerPostModel>> GetPagedAsync(GoblinBlogCrawlerGetPagedPostModel model, CancellationToken cancellationToken = default)
         {
             try
             {
-                var endpoint = Domain
-                    .WithHeader(GoblinHeaderKeys.Authorization, AuthorizationKey)
-                    .AppendPathSegment(GoblinBlogCrawlerEndpoints.GetPagedPost);
+                var endpoint = GetRequest(null).AppendPathSegment(GoblinBlogCrawlerEndpoints.GetPagedPost);
 
                 var userPagedMetaResponse = await endpoint
-                    .ConfigureRequest(x =>
-                    {
-                        x.JsonSerializer = JsonSerializer;
-                    })
                     .PostJsonAsync(model, cancellationToken: cancellationToken)
                     .ReceiveJson<GoblinApiPagedMetaResponseModel<GoblinBlogCrawlerGetPagedPostModel, GoblinBlogCrawlerPostModel>>()
                     .ConfigureAwait(true);
@@ -40,20 +49,10 @@ namespace Goblin.BlogCrawler.Share
             }
             catch (FlurlHttpException ex)
             {
-                var goblinErrorModel = await ex.GetResponseJsonAsync<GoblinErrorModel>().ConfigureAwait(true);
+                await FlurlHttpExceptionHelper.HandleErrorAsync(ex).ConfigureAwait(true);
 
-                if (goblinErrorModel != null)
-                {
-                    throw new GoblinException(goblinErrorModel);
-                }
-
-                var responseString = await ex.GetResponseStringAsync().ConfigureAwait(true);
-
-                var message = responseString ?? ex.Message;
-
-                throw new Exception(message);
+                return null;
             }
         }
-
     }
 }

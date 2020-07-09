@@ -1,8 +1,8 @@
 ﻿using Elect.Core.ConfigUtils;
 using Goblin.Core.Web.Setup;
-using Goblin.BlogCrawler.Core.Validators;
 using Goblin.BlogCrawler.Core;
 using Goblin.BlogCrawler.Repository;
+using Goblin.BlogCrawler.Share.Validators;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
